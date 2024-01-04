@@ -7,7 +7,13 @@ name: bp_mlbmat
 channels:
   - conda-forge
 dependencies:
-  - python==3.12
-  - numpy
+  # numpy setuptools is needed for qml in the kernel methods tutorial
+  # So no 3.12 either
+  - numpy<=1.22
+  - python
   - jupyter
   - jupytext
+  - tqdm
+  - pip
+  - pip:
+    - git+https://github.com/qmlcode/qml.git@develop
