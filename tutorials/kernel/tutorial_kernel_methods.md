@@ -63,7 +63,7 @@ np.random.seed(1234)
 ```{code-cell} ipython3
 :id: uq37BRKHdehX
 
-# Mapping string to integer for nuclear charges
+# Mapping strings to integers for nuclear charges
 NUCLEAR_CHARGE = {
  'H'  :     1,
  'He' :     2,
@@ -179,8 +179,16 @@ NUCLEAR_CHARGE = {
  'Cn' :   112,
  'Uuq':   114,
  'Uuh':   116}
+```
 
-# Auxiliary class to store all necessary information for a single compound
+We would also like to store the data in a structured manner, either
+[dataclasses](https://docs.python.org/3/library/dataclasses.html) or
+[namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple)
+would work (classes are overkill). Personally, NamedTuples seem cleaner in most
+cases.
+
+```{code-cell} ipython3
+# Auxiliary data-structure to store all necessary information for a single compound
 Compound = namedtuple('Compound', ['name', 'coordinates', 'nuclear_charges', "energy", "forces"])
 ```
 
@@ -192,11 +200,18 @@ Compound = namedtuple('Compound', ['name', 'coordinates', 'nuclear_charges', "en
 
 ### Load dataset
 
+**note**
+
+In production, one would not write readers for common file formats by hand,
+instead relying on existing (well-tested) tooling like
+[ase](https://wiki.fysik.dtu.dk/ase/) or
+[readCon](https://github.com/HaoZeke/readcon).
+
 ```{code-cell} ipython3
 :id: 4TfDei7ddejv
 
-# Read xyz file to return molecular coordinates and nuclear charges
-# Handles a single compound per call
+# Read an xyz file to return molecular coordinates and nuclear charges
+# This can only handle a single compound per call!!!
 def read_xyz(data):
     if type(data) == str:
         f = open(data, "r")
@@ -257,7 +272,7 @@ def database_qmrxn20():
 
 +++ {"id": "Ta3IMP2V2NmM"}
 
-### Beginning of energy prediction pipeline
+### Beginning the energy prediction pipeline
 
 ```{code-cell} ipython3
 :id: cN-x9NBV5KfO
@@ -271,7 +286,10 @@ def solve(A, y):
 +++ {"id": "kMhIB57i2NmN"}
 
 ### Generate input features to perform a similarity measure
-A straightforward way of representing a molecule, defined by the geometry $R$ and the nuclear charges $Z$, is the coloumb matrix.
+
+A straightforward way of representing a molecule, defined by the geometry $R$
+and the nuclear charges $Z$, is the [coloumb
+matrix](https://singroup.github.io/dscribe/0.3.x/tutorials/coulomb_matrix.html).
 The following function computes per compound a matrix $M$:
 
 \begin{align}
@@ -283,9 +301,13 @@ M_{ij} = \left\{
         \right.
 \end{align}
 
+**note**
+
+Again in production one would use an existing library like
+[DScribe](https://www.sciencedirect.com/science/article/pii/S0010465519303042)
+
 ```{code-cell} ipython3
 :id: j1ZQK_V3desI
-
 
 def generate_coulomb_matrix(R, Z, size=23):
     natoms = R.shape[0]
@@ -307,9 +329,15 @@ def generate_coulomb_matrix(R, Z, size=23):
 +++ {"id": "zYYI1Qqe2NmN"}
 
 ### Gaussian kernel function
-The next step is to define a kernel function. Below a gaussian is choosen as a similarity metrics. Alternatives would be for example a Laplacian kernel or a linear kernel.
 
-It takes as two datasets $A \in \mathbb{R}^{n_1 \times f}$ and $B \in \mathbb{R}^{n_2 \times f}$ for $n_1$ and $n_2$ being the number of samples of each dataset (representing in our case molecules) and $f$ represents the feature dimension, e.g. the feature dimension of the coulomb matrix.
+The next step is to define a kernel function. Below a Gaussian density is
+choosen as a model for the covariance matrix. Alternatives would be for example
+a Laplacian kernel or a linear kernel.
+
+It takes as two datasets $A \in \mathbb{R}^{n_1 \times f}$ and $B \in \mathbb{R}^{n_2 \times f}$ for $n_1$ and
+$n_2$ being the number of samples of each dataset (representing in our case
+molecules) and $f$ represents the feature dimension, e.g. the feature dimension
+of the coulomb matrix.
 
 ```{code-cell} ipython3
 :id: dEnM-y3g2NmN
@@ -338,8 +366,8 @@ def gaussian_kernel(A, B, sigma=1000):
 ```{code-cell} ipython3
 :id: j-Dgr7IGdeue
 
-# Define number of samples for training and predictions
-# Large number of samples (> 1000) can be resource intensive (memory & compute)
+# Define the number of samples for training and predictions
+# Large number of samples (> 1000) can be resource intensive (for both memory & compute)
 nb_samples = 100
 
 # Load data
@@ -398,14 +426,18 @@ print(f"Mean absolute error: {np.mean(np.abs(y_pred - y_test))}")
 
 +++ {"id": "VzDAHCaF2NmP"}
 
-As one can see that for this rather small training and test set the mean absolute energy is rather inaccurate. This is partially due to a small training dataset but also connected to the coulomb matrix as input feature.
+As one can see that for this rather small training and test set the mean
+absolute energy is rather inaccurate. This is partially due to a small training
+dataset but is also connected to the inefficiency of the coulomb matrix as an
+input feature.
 
 +++ {"id": "f3IZUk1n2NmP"}
 
 ### Part 2: Improved input features and kernel function
 
-The following part is relying on the qml package. For installation instruction see their website: https://www.qmlcode.org/index.html
-To use specific input features we need to install the developer branch:
+This section relies on the `qml` package. For installation instruction
+see their website: https://www.qmlcode.org/index.html To use specific input
+features we need to install the developer branch:
 
 `pip install git+https://github.com/qmlcode/qml.git@develop`
 
@@ -495,6 +527,8 @@ y_pred = np.dot(alpha, K_pred)
 print("Test MAE:", np.mean(np.abs(y_pred - y_test)))
 ```
 
+Clearly a better descriptor makes a huge difference.
+
 +++ {"id": "JLe_QuKNEgmH"}
 
 ### Part 3: Predict forces & energies
@@ -516,8 +550,6 @@ raw_data = np.load("h2co_ccsdt_avtz_4001.npz")
 ```{code-cell} ipython3
 :id: VowppG9tJvN1
 
-# Define number of samples for training and predictions
-# Large number of samples (> 1000) can be resource intensive (memory & compute)
 nb_samples = 100
 
 # Scaling of kernel
