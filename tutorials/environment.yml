@@ -1,0 +1,13 @@
+# To use:
+#
+#   $ conda env create -f environment.yml  # `mamba` works too for this command, without env
+#   $ conda activate hzsite
+#
+name: bp_mlbmat
+channels:
+  - conda-forge
+dependencies:
+  - python==3.12
+  - numpy
+  - jupyter
+  - jupytext
