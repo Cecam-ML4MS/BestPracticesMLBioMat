@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% LIVECOMS ARTICLE TEMPLATE FOR BEST PRACTICES GUIDE
+%%% LIVECOMS ARTICLE TEMPLATE FOR rBEST PRACTICES GUIDE
 %%% ADAPTED FROM ELIFE ARTICLE TEMPLATE (8/10/2017)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% PREAMBLE
@@ -12,7 +12,6 @@
 % Omit the bestpractices option to remove the marking as a LiveCoMS paper.
 % Please note that these options may affect formatting.
 
-\usepackage{lipsum} % Required to insert dummy text
 \usepackage[version=4]{mhchem}
 \usepackage{siunitx}
 \DeclareSIUnit\Molar{M}
@@ -25,31 +24,40 @@
 
 \newcommand{\versionnumber}{1.0}  % you should update the minor version number in preprints and major version number of submissions.
 % Do not add a newline in the next command, no matter how long the repository name is, as it will break the link in the PDF.
-\newcommand{\githubrepository}{\url{https://github.com/myaccount/homegithubrepository}}  %this should be the main github repository for this article.
+\newcommand{\githubrepository}{\url{https://github.com/Cecam-ML4MS/BestPracticesMLBioMat}}  %this should be the main github repository for this article.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% ARTICLE SETUP
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\title{Best Practices for Training and Applying Neural Network Potentials to Large and Complex Chemical Systems [Article v\versionnumber]}
+\title{Best Practices for Training and Applying Machine Learning Potentials to Large and Complex Chemical Systems [Article v\versionnumber]}
 
-\author[1*]{Firstname Middlename Surname}
-\author[1,2\authfn{1}\authfn{3}]{Firstname Middlename Familyname}
-\author[2\authfn{1}\authfn{4}]{Firstname Initials Surname}
-\author[2*]{Firstname Surname}
-\affil[1]{Institution 1}
-\affil[2]{Institution 2}
+\author{Tarak Karmakar}
+\author{Olexandr Isayev}
+\author{Marcus Wieder}
+\author[8]{Leon Gerard}
+\author[6,7]{Sana Qureshi}
+\author{Joe Morrow}
+\author[3,4]{Rohit Goswami}
+\author[5]{Chris Oostenbrink}
+\author[6,7]{Guido Falk von Rudorff}
+\affil[1]{Department of Chemistry, Indian Institute of Technology, Delhi, Hauz Khas, New Delhi 110016, India}
+\affil[3]{Science Institute and Faculty of Physical Sciences, University of Iceland, 107 Reykjavík, Iceland}
+\affil[4]{Quansight Labs, Austin, TX, USA}
+\affil[5]{Institute for Molecular Modeling and Simulation, University of Natural Resources and Life Sciences, Vienna, Austria}
+\affil[6]{Institut f\"ur Chemie, Universit\"at Kassel, 34109 Kassel}
+\affil[7]{Center for Interdisciplinary Nanostructure Science and Technology (CINSaT), Heinrich-Plett-Straße 40, 34132 Kassel}
+\affil[8]{Research Network Data Science, University of Vienna, Austria}
+\affil[9]{Open Molecular Software Foundation}
+\affil[10]{Exscientia Ltd, Schroedinger Building, Oxford, United Kingdom}
 
-\corr{email1@example.com}{FMS}  % Correspondence emails.  FMS and FS are the appropriate authors initials.
-\corr{email2@example.com}{FS}
+\corr{vonrudorff@uni-kassel.de}{GFvR}  % Correspondence emails.  FMS and FS are the appropriate authors initials.
+\corr{rgoswami@ieee.org}{RG}
 
-\orcid{Author 1 name}{AAAA-BBBB-CCCC-DDDD}
-\orcid{Author 2 name}{EEEE-FFFF-GGGG-HHHH}
-
-\contrib[\authfn{1}]{These authors contributed equally to this work}
-\contrib[\authfn{2}]{These authors also contributed equally to this work}
-
-\presentadd[\authfn{3}]{Department, Institute, Country}
-\presentadd[\authfn{4}]{Department, Institute, Country}
+\orcid{Guido Falk von Rudorff}{0000-0001-7987-4330}
+\orcid{Rohit Goswami}{0000-0002-2393-8056}
+\orcid{Chris Oostenbrink}{0000-0002-4232-2556}
+\orcid{Sana Qureshi}{0000-0002-1739-016X}
+\orcid{Marcus Wieder}{}
 
 \blurb{This LiveCoMS document is maintained online on GitHub at \githubrepository; to provide feedback, suggestions, or help improve it, please visit the GitHub repository and participate via the issue tracker.}
 
@@ -65,6 +73,13 @@
 \articlenum{<number>}
 \datereceived{Day Month Year}
 \dateaccepted{Day Month Year}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% - Specific systems not fleshed out
+% - some paragraphs remain at the surface
+% - author details
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% ARTICLE START
@@ -82,28 +97,168 @@ TODO
 \end{frontmatter}
 
 
-\section{Introduction}
-% something brief, TODO
+\section{Introduction and Scope}
+With the advent of large-scale computational capacity, simulations and modeling,
+or ``in-silico'' experiments have become part and parcel of the scientific
+endeavor, and have been recognized as such (alongside theory and experiment).
+Although the goal is to generate an efficient sample to gain statistical insight
+applicable to real systems, the fundamental mechanism to do so is through the
+modeling of material properties with an energy functional. Energy functional in
+hand, one may then obtain all relevant properties of a system under
+consideration using a well-established set of tools, from the stable configurations of a bio-molecule to the reaction
+mechanisms of catalysts or even the simulation of statistically ``rare'' events
+like thermodynamic transitions \cite{meyBestPracticesAlchemical2020} through
+molecular dynamics simulations \cite{braunBestPracticesFoundations2019}.
 
+Computational methods, however closely tied to theory, and validated by
+experiment, must be tempered by an understanding of uncertainties, both
+epistemic or system (from imperfect information) and aleatory (inherent
+randomness), not only due to assumptions made to express a simulation
+\cite{grossfieldBestPracticesQuantification2019} but also from the restrictions
+posed by transcribing analytical models into finite computational primitives
+\cite{goldbergWhatEveryComputer1991}.
+
+\subsection{Basic terminology}
+
+\subsubsection{Energy functions}
+
+Potential energy functions can be parameterized at different scales, e.g. bond torsion may be important for a protein force field, but not so important (and implicitly accounted for) in an ab initio or density functional theory calculation. We restrict our scope to the modern-day ``semi-empirical'' force-field equivalents, those of ``machine learning''. A typical molecular
+empirical (total) energy function will be parameterized as a function of contributions \cite{brooksCHARMMProgramMacromolecular1983}
+
+\[
+  E = E_{b} + E_{\theta} + E_{\phi} + E_{\omega} + E_{vdW} + E_{el} + \ldots
+\]
+
+\noindent where $E_{b}$ is the bond potential, $E_{\theta}$ is the bond angle potential,
+$E_{\phi}$ is the dihedral angle, $E_{\omega}$ is the improper torsion, $E_{vdW}$
+corresponds to the van-der Waals contributions, $E_{el}$ is the electronic energy
+and other (optional) correcting terms. Each one of these terms is further characterized by a functional form and
+some free parameters which are tuned so the entire potential energy is able to
+reproduce a set of competing experimental or computational observations to a desired level of accuracy over a given
+set of components of interest.
+
+More generally, the total energy can be taken to be a sum of contributions of many
+body terms, \cite{stoneTheoryIntermolecularForces2013}
+
+\[
+  E = E_{0} + \sum_{i<j} V_{2}(\mathbf{r}_{i}, \mathbf{r}_{j}) + \sum_{i<j<k} V_{3}(\mathbf{r}_{i}, \mathbf{r}_{j}, \mathbf{r}_{k}) + \ldots + \sum_{i<j<\ldots<n} V_{n}(\mathbf{r}_{i}, \mathbf{r}_{j}, \ldots, \mathbf{r}_{n}) + \text{{corrections}} \]
+
+\noindent where $E_{0}$ is the reference energy (e.g. of isolated particles),
+$V_{2}, V_{3}\ldots$ are the interaction potentials for two body, three body etc. and
+$r_{i}$ are the particle positions.
+
+We will end this sub-section by noting that there is no hard and fast requirement
+that the energy function comprises strictly of atomic positions, and that some of the best agreement with the experiment
+\cite{prernaStudyIceNucleation2019,goswamiHomogeneousNucleationSheared2021} are
+via considering extended site models (e.g. TIP4P for water \cite{Abascal2005}), i.e. models where not all interaction centers coincide with atomic positions.
+Other valid approaches involve considerations in terms of the electronic
+Hamiltonian (Hartree-Fock, post-Hartree-Fock) methods or even bypassing them and
+working in terms of the density of electrons \cite{burschBestPracticeDFT2022,huangCentralRoleDensity2023}.
+
+For our purposes, we need only recognize two things, that ``potential energy''
+used has always contained parameters fit by algorithmic approaches, and that
+every parameterization has a range over which it is valid. We will consider
+these existing potential energy functions as a black box of ground truth for the
+rest of the article.
+
+\subsubsection{Machine Learned Potentials}
+Given that all energy functions contain parameters optimized to replicate
+experimental or computational data, one may ask what sets the ``Machine Learned'' (ML) potentials
+apart. Typically, the construction proceeds from first principles grounded in
+the time and length scales at samples are required. The machine learning
+approach as defined for the rest of this paper is a loose collection of
+algorithmic methods \cite{ceriottiUnsupervisedMachineLearning2019} which can
+generate energy functions without explicitly defining parameters, that is only
+from a set of descriptors $\mathbf{X}=f(\mathbf{R}_I, Z_I, N_e, \sigma)$ with the same general inputs as the physical Hamiltonian, i.e. the atom positions $\mathbf{R}_I$, the nuclear charges $Z_I$, the number of electrons $N_e$ and the net spin $\sigma$ defining a system and output
+properties $y$, which are often energies or energy-force pairs.
+
+In this regard, the key strength of an ML potential or approach is that, given
+enough candidate configurations of a system, an energy function can be obtained
+which accurately predicts properties at new configurations. If this sounds like
+the setup for a regression problem, it is because machine learning algorithms
+are rooted in statistical inference, differentiated typically by the number of
+parameters \cite{efronComputerAgeStatistical}.
+
+Typically, machine learning potentials are non-parametric, i.e., allow for additional parameters if the number of data points is increased. By contrast, classical energy functions are parametric, i.e., the total number of parameters is bounded. This limits the flexibility of the underlying model and thus ultimately results in limited accuracy for most systems, which, given enough training data, is not the case for machine learning potentials.
+
+\subsection{Scope}
+
+We restrict our discussion to the methods available to take training data
+generated by a ``black-box'' ground truth potential energy function and the
+construction of a surrogate/machine learned potential such that the resulting
+potential is either  more scalable or faster with the same or comparable
+accuracy. We will cover the approaches to constructing these from a practical
+perspective, deferring to standard reviews and textbooks where required.
 
 \section{Data Selection}
-Data selection is one of the most crucial and challenging steps in the development of ML potential models. The challenges lie in the generation of accurate reference data which often involves expensive quantum chemical calculations and the collection of a large number of configurations that cover the phase space of our interest. The trade-off between the {\em accurate} and {\em large} datasets often dictates the quality of an ML model and its effective use in the study of small molecules to condensed phase systems. Here we summarise a few methods to collect datasets for training ML models. 
+Data selection is one of the most crucial and challenging steps in the
+development of ML potential models.
+Recently, ML approaches have been improved to deal with the sparseness, variation, and scale of accessible datasets, as well as inherent error and distortion. However, the challenges lie in the generation of accurate reference data, which often involves expensive quantum chemical
+calculations and the collection of many configurations that cover
+the phase space of our interest. Methods have been devised to generate intricate models with accurate forecasting performance, even though some models may lack effectiveness in training and accessibility. In contrast, the trade-off between the {\em accurate} and
+{\em large} datasets often dictate the quality of an ML model and its effective
+use in the study of small molecules to condensed phase systems. Here we
+summarise a few methods to collect datasets for training ML models.
 
 
 \subsection{From quantum chemical calculations}
-In this approach, we collect a set of configurations either from experiments or manually generated molecular conformations corresponding to the equilibrium state(s) of the system. Quantum chemical calculations are carried out to obtain the optimized structures, energies, and forces required for ML training. For small molecular systems to clusters of molecules, the CCSD(T) level of theory can be used, however, by this approach, a small subset of configurations can only be dealt with which limits the ML model access to a small region of the PES. This issue can be alleviated by lowering the accuracy and running DFT calculations of a larger set of configurations. 
+When developing any supervised regression model, it is critical to determine how to produce training data that best represents your goal function. In this approach, we collect a set of configurations from experiments or
+manually generated molecular conformations corresponding to the system's equilibrium
+state(s). Quantum chemical calculations are done to obtain
+the optimized structures, energies, and forces required for ML training. For
+small molecular systems to clusters of molecules, the CCSD(T) level of theory
+can be used; however, by this approach, a small subset of configurations can
+only be dealt with which limits the ML model access to a small region of the
+potential energy surface (PES). This issue can be alleviated by lowering the accuracy and running DFT
+calculations of larger configurations.
 
-When it comes to studying the dynamics of a system, {\em ab initio} MD methods are probably the most convenient ways of exploring the phase space and sample configurations. One can run a few simulations of the systems at different temperatures and pressures that correspond to the regions of the phase space and collect configurations from each of these trajectories. This approach, by large, is used for condensed phase systems such as bulk fluids, periodic crystals, and multi-component systems (chemical reactions). 
+When it comes to studying the dynamics of a system, {\em ab initio} MD methods
+are probably the most convenient way of exploring the phase space and sample
+configurations. Incorporating atomic-level information, such as forces or local environments, into data selection algorithms may lead to more efficient sampling of phase space. One can run a few simulations of the systems at different
+temperatures and pressures that correspond to the regions of interest of the phase space and
+collect configurations from each of these trajectories. This approach, by large,
+is used for condensed phase systems such as bulk fluids, periodic crystals, and
+multi-component systems (chemical reactions).
+
+While the trajectories need to be long enough to cover a relevant portion of the phase space, it is crucial to consider the strong auto-correlation in such time series data when (optionally) sub-selecting frames of the trajectories for inclusion in the training data or for use in test data sets. For example, a model where every second step of a trajectory has been included in training and every other step in the test set, the accuracy of such model would be severely overestimated due to the self-similarity of the underlying data.
 
 \subsection{Classical simulations}
-Classical MD simulations with a good set of empirical force field parameters can explore large regions of the phase space at different thermodynamic conditions such as multiple temperatures and pressures making it possible to collect an enormous number of configurations. Static quantum chemical calculations (single point) are carried out to obtain the energy and forces which are then used in the ML training. 
+Classical MD simulations with a decent set of empirical force field parameters can
+explore huge portions of the phase space at various thermodynamic conditions such as 
+varied temperatures and pressures, enabling a vast number of configurations to be 
+collected. 
+To obtain the energy and forces that will be used in the ML training, 
+static quantum chemical calculations (single point) are performed on select frames of the classical trajectories.
 
-A limitation that hinders the effective use of classical brute-force MD simulations is the inadequate sampling of the phase space. This is a serious concern when one studies activated processes such as phase transitions and biological processes that involve long timescales. For modeling chemical reactions, one needs to either use AIMD methods or MD simulations with reactive FFs. These simulations also face the challenges of sampling the reactant, transition, and product states. Enhanced sampling simulations can be combined with classical and {\em ab initio} MD simulations to sample these rare events.\\
+A constraint that prevents the efficient use of traditional brute-force 
+MD simulations is the inadequate sampling of the phase space. This is a serious
+concern when one studies activated processes of biological or chemical applications
+such as phase transitions that involves long timescales. For modeling chemical
+reactions, one needs to either use AIMD methods or MD simulations with reactive
+force fields for accuracy reasons, since parametric non-reactive force fields typically do not model this configuration region well. These simulations consequently pose an obstacle for sufficient sampling the reactant, transition
+and product states due to their associated cost. Enhanced sampling simulations can be combined
+with classical and {\em ab initio} MD simulations to sample these rare events.
 
 \subsection{Enhanced Sampling Simulations}
-Enhanced sampling methods can chiefly be categorized into two types - one that enhances the fluctuations of the system's energy (replica exchange MD and parallel tempering), and the other which enhances the fluctuations of the system's {\em slow} degrees of freedom, often referred to as order parameters (OPs), reaction coordinates (RCs), or collective variables (CVs). Umbrella sampling (US), metadynamics (MetaD) and its latest evolution, on-the-fly probability-based enhanced sampling (OPES) are a few popular ones in the latter category. 
+Enhanced sampling methods can chiefly be categorized into two types -- one that
+enhances the fluctuations of the energy of the system (replica exchange MD and
+parallel tempering), and the other which enhances the fluctuations of the
+system's {\em slow} degrees of freedom, often referred to as order parameters
+(OPs), reaction coordinates (RCs), or collective variables (CVs). Umbrella
+sampling (US), metadynamics (MetaD) and its evolution, on-the-fly
+probability-based enhanced sampling (OPES) are a few popular ones in the latter
+category.
 
-In a few recent works, ES sampling simulations were used in conjunction with the equilibrium classical FF and {\em ab initio} MD simulations to collect configurations from the system's various states. Niu {et al.} employed the multi-thermal multi-baric variationally enhanced sampling (MultiTP-VES) method to explore the phase space of Gallium and collect configurations from the liquid and crystal phases. Yang {et al.} used multiTP OPES simulations to include configurations from equilibrium states and transitions (coexistence) regions of the liquid phosphorous phase diagram. This strategy is particularly useful for studying chemical reactions involving a large number of possible transition states and products. 
+In a few recent works, ES sampling simulations were used in conjunction with the
+equilibrium classical FF and {\em ab initio} MD simulations to collect
+configurations from the system's various states. Niu {et al.} employed the
+multi-thermal multi-baric variationally enhanced sampling (MultiTP-VES) method
+to explore the phase space of Gallium and collect configurations from the liquid
+and crystal phases. Yang {et al.} used multiTP OPES simulations to include
+configurations from equilibrium states and transitions (coexistence) regions of
+the liquid phosphorous phase diagram. This strategy is particularly useful for
+studying chemical reactions involving a large number of possible transition
+states and products.
 
 
 
@@ -116,7 +271,21 @@ In a few recent works, ES sampling simulations were used in conjunction with the
 
 
 \subsection{Active learning}
-In the active learning protocol, one starts with an initial set of configurations either from static quantum chemical structures or from an AIMD trajectory and obtain an initial ML potential. In the next iterations, more candidates are added to the training process. The new candidates are labelled with model deviations (uncertainty) of atomic forces, and the ones with maximum model deviations are added to the training dataset. Another active learning method is based on the '{\em Query-by-committee}' approach in which random datasets (set of candidates) are selected to generate ML potentials, and the candidates with maximum deviations are added to the iteration procedure. Active learning combining the enhanced sampling simulations is another strategy to add candidates to the training '{\em on-the-fly}' as done in Ref. XX-XX. In this procedure, the initial set of ML potential is used to carry out ES simulations that explore much larger area of the phase space and collect configurations from the extended space. 
+In the active learning protocol, one starts with an initial set of
+configurations either from static quantum chemical structures or from an AIMD
+trajectory and obtain an initial ML potential. This potential is improved by biasing new training data in a way that is deemed to accelerate sampling. Often, this is done by labelling new candidates
+with model deviations (uncertainty) of atomic forces, and the ones with maximum
+model deviations are added to the training dataset. Another active learning
+method is based on the '{\em Query-by-committee}' approach in which random
+datasets (set of candidates) are selected to generate ML potentials, and the
+candidates with maximum deviations are added to the iteration procedure. Active
+learning combining the enhanced sampling simulations is another strategy to add
+candidates to the training '{\em on-the-fly}' as done in \cite{thompsonOptimizingActiveLearning2022}. In this
+procedure, the initial set of ML potential is used to carry out ES simulations
+that explore much larger area of the phase space and collect configurations from
+the extended space.
+
+Other ways to bias new training data in an active learning setting include choosing configurations which are dissimilar to existing training data or are expected to have labels at the tails of the property distribution or lie at the boundaries of the chemical space the model is intended to cover.
 
 %Ref: PRL 2021, NatComm 2021\\
 
@@ -126,7 +295,14 @@ In the active learning protocol, one starts with an initial set of configuration
 
 
 \subsection{Random configurations generation}
-One can also generate configurations randomly from an equilibrated state by slightly changing the coordinates (or reaction coordinates) randomly (or systematically). For example, while studying a molecule with many conformational states, one can systematically rotate the dihedral angles that would correspond to different metastable states. On the other hand, in condensed-phase systems, one can change the atomic coordinates to generate new (not-so-different) configurations corresponding to an equilibrated state of the system. This is done more systematically in {\em normal mode sampling} in which the coordinates are changed along certain normal modes. 
+One can also generate configurations randomly from an equilibrated state by
+slightly changing the coordinates (or reaction coordinates) randomly. For example, while studying a molecule with many conformational
+states, one can systematically rotate the dihedral angles that would correspond
+to different metastable states. On the other hand, in condensed-phase systems,
+one can change the atomic coordinates to generate new (not-so-different)
+configurations corresponding to an equilibrated state of the system. This is
+done more systematically in {\em normal mode sampling} in which the coordinates
+are changed along certain normal modes.
 
 %Generation of configurations randomly from an initial equilibrated state is another strategy to obtained data
 
@@ -137,166 +313,436 @@ One can also generate configurations randomly from an equilibrated state by slig
 
 
 \subsection{Transition state search methods}
-To develop an ML potential for a reactive system such as a chemical reaction one needs to consider the transition state structures in the training set. This is especially important for recovering the kinetics of the process. Obtaining representative TS configurations is a non-trivial task. There are a handful of methods that can sample, in particular, the transition states and provide ensembles of configurations.\\
-
-Refs: 
-https://doi.org/10.1039/C5CP02175H\\
-https://doi.org/10.1021/jp8106556\\
-https://doi.org/10.1021/acs.jpclett.0c01125\\
-https://doi.org/10.1021/acs.jctc.2c00806\\
+To develop an ML potential for a reactive system such as a chemical reaction one
+needs to consider the transition state structures in the training set. This is
+especially important for recovering the kinetics of the process. Obtaining
+representative TS configurations in particular or a representative data set of thermally accessible yet non-equilibrium configurations is a non-trivial task. There are a handful of
+methods that can sample, in particular, relevant regions around transition states and provide
+ensembles of configurations \cite{martinez-nunezAutomatedTransitionState2015,
+mantzEnsembleTransitionState2009, debnathGaussianMixtureBasedEnhanced2020,
+rayRareEventKinetics2022,heinenTransitionStateSearch2022}.
 
 %\subsection{Feature engineering}
 %Another aspect of data collection is to choose the right set of configurations that carry useful information relevant to the model's use. Feature selection and extraction are non-trivial problems for ML-FF generation. \\
+%
+
+%\subsubsection{Accelerating transition state searches}
+
+The achievement of the transition state geometries at a particular level
+of theory is a non-trivial process for unknown systems of interest. 
+Hundreds or even thousands of costly energy and force computations 
+are needed for the typical single- (dimer) and double-ended (nudged-elastic-band) 
+search techniques.
+
+By leveraging principles from active learning to select points and constructing
+throw-away potential energy surfaces in a train-test loop, it is possible to
+reduce the number of true potential energy and force calls by an order of
+magnitude utilizing uncertainty estimates and chemically intuitive kernel
+functions\cite{koistinenMinimumModeSaddle2020,koistinenNudgedElasticBand2019}.
+
+\subsubsection{Data quality vs quantity}
+For small molecules in gas phase, it has been shown that it is more important to have good coverage of the overall configurational space at some low to intermediate level of theory than to have all the training data at some high level of theory\cite{ramakrishnanBigDataMeets2015}. This $\Delta$-learning approach exploits the significant correlations between levels of theory by only learning the difference between low and high level of theory rather than directly learning the high level of theory. This can be generalized to multi-level-learning where several such levels are included at once. In this general case, the most computationally efficient ratio of training data points on each level of theory can be estimated with just a few calculations\cite{TODO}. There is no point however, to either generate training data at a level which is too low to include relevant physics of the system, i.e. which is too simplistic. In these cases, learning progress will even be hindered, since the difference of the two levels of theory (low and high) might be harder to learn than the high level surface directly. Therefore, it is prudent to choose a cheap but acceptable low-level method and a costly but affordable high-level method.
+
+Since it is commonly assumed in machine learning or perturbative quantum chemistry approaches\cite{tamayo-mendozaAutomaticDifferentiationQuantum2018b,abbottArbitraryOrderDerivativesQuantum2021,vonrudorffArbitrarilyAccurateQuantum2021} that small changes to the input configurations only result in small changes of the label, it is more important to include a diverse set of atomic configurations and environments than to sample more and more configurations which are almost the same. Therefore, a valid strategy might result from combining
+data collection from classical MD and ES simulations, which are less accurate but
+sample the phase space quickly. This only strictly holds if the phase space overlap between the different levels of theory is sufficiently large, but that might be fixed by adding an active learning procedure after sampling from classical MD.
+
+\subsubsection{Mixing of data at various QM levels}
+Typically it is advisable to not merge data sets from different sources or computational protocols, even if obvious settings such as level of theory and basis set/pseudopotentials for quantum chemsitry calculations are identical. The reason here is that other settings beyond these major ones (such as but not limited to integration grids, symmetry constraints, integrator details, convergence settings) can influence the labels in an uncontrolled manner which would resemble noise. If that is the case, including incompatible training data will force any model to interpolate between two energy surfaces, ultimately limiting the accuracy of the overall model. Even if the settings are identical between different quantum chemistry codes, it is important to understand the exact output that is produced, e.g. whether a center-of-mass motion is removed or which coordinate system is used internally. A better approach if such disparate data sets need to be combined would be e.g. ensembles of models where a meta-model chooses a specific model to use in different regions in chemical space.
+
+This becomes especially relevant for AIMD trajectories, where typical convergence settings are chosen such that the MD is running swiftly even if the individual self-consistent cycle for each frame of the trajectory is not tightly converged. This means that not only the energy and or the density but also derivatives such as forces are underconverged. Since often the electron density / wavefunction of the previous frame or frames is used to provide the initial guess of the subsequent one, the trajectory becomes history-dependent and as such neither conserves energy nor is time-reversible unless special precautions are taken. Therefore, it is highly recommended to re-converge individual frames from AIMD trajectory data if their electronic structure will be used as training data.
+
+\subsubsection{Data and code repository}
+A data repository is a consolidated or distributed storage system where data-sets are gathered, structured, and made available for access and usage by researchers and ML practitioners for model training, assessment, and study, commonly following FAIR principles or aspiring to do so. Making research data available promotes accessibility, repeatability, and cooperation within the ML community. Researchers and practitioners ought to carefully choose datasets from these sources, taking into account their distinct project requirements such as chemical space covered, level of theory, extensiveness of the data set. Recent years have witnessed an unprecedented surge of ML potentials for a large variety of systems, so sharing underlying training data and model code became much more important. Sharing the model code allows for better reproducibility since the manuscript alone rarely allows to reproduce the results in all details, since implementation details are usually not discusses extensively, even though they might turn out to be relevant for future work. A core aspect of reproducibility is not only the code written by the researchers directly but also the software stack that is used and often consists of deeply nested dependencies. Even after a few months, it might be hard to reproduce the exact same environment where research code has been used, which poses a challenge, since with other software versions oftentimes default settings or behaviour changes or a new programming interface prohibits interoperability.
+
+Sharing code and data in a traceable and future-proof manner requires to include the code, and all its dependencies at least by version number or snapshot of the environment such as a docker container or similar. This data can be made available using a DOI e.g. via Zenodo or via Figshare. This ensures that a specific version of the code has been the foundation of a given paper and improves reusability and therefore impact of the research in question.
+
+In general, modern computational tools have evolved to enable fine granularity for reusability. Not only are there a proliferation of version control tools (\texttt{git}, \texttt{svn}, \texttt{darcs}) but there are now a host of associated free hosting servers (e.g. GitHub, GitLab, SourceForge, SourceHut). Beyond this, several Nordic countries and research software engineering groups also host their own version controlled software like the STFC's Gitlab instace, or the Nordic RSE's Gitlab instance.
+
+Beyond this, tools have evolved like \texttt{dvc} which facilitate versioning of larger files or even models on flexible backends, which are amenable also to SSH or SFTP storage backends, allowing researchers to flexibly store large datasets on their secured systems with the benefits of version control for data and models.
+
+Often the question comes for young researchers, of how often to commit and what practices to follow. Established projects in the open source community typically have a raft of tests (both at the unit level, and at the integration level) run on a Continous Integration system. However, for most smaller projects, and especially in the early stages, it is most important to commit early and often. Development should shift to a pull request / merge request based workflow as soon as possible, to gate on when tests should pass. Essentially, commit often on branches, open requests, clean up the history at the end before merging. It is helpful to both keep a changelog, and also a (release) versioning system, along with an enforced commit message format, like "\texttt{MAINT: Some update to subroutine fourty-two}". Common guidelines include \textt{ENH, MAINT, BUG, REL} among others.
+
+%\subsection{Specific Systems}
+%Specific systems: 
+%How to generate a sufficiently large dataset to begin with How to judge what
+%sufficiently large means
+
+%Dataset - molecular conformations, sampled configurations, active learning
+%Quantum chemical calculations, MD simulations, enhanced sampling, experimental
+%data,
 
 
-\noindent
-{\bf Data quality vs quantity?}\\
-Do we need configurations with accurate energy and forces?\\
-For calculating molecular conformations in the gas phase, and small clusters of molecules. Calculating their structural and spectroscopic properties?
-We will be limited by a few of such configurations - are they enough to get a good ML potential?
+%Can my dataset be too big (such that interesting conformation get no weight) ?
+%Big data set or uncorrelated dataset - depends on the complexity of the system!
+%We need diverse and uncorrelated dataset for effective learning (and avoid
+%overfitting).
 
-One can obtain a large number of configurations at the DFT level - by combining data collection from classical MD and ES simulations, they are less accurate but sample the phase space. Do they suffice the need for a good ML potential? For large condensed phase systems such as bulk liquid (mixtures), periodic solids (materials), and small biomolecules in explicit solvent, the latter option is more viable! - point for discussion?\\
+%Does it make sense to weight some features more than others, as they are
+%supposed to provide more physically relevant information? If so, how to estimate
+%the appropriate weight?
 
+%Yes, we can use certain type of features that would allow us distinguish between
+%various configurations/states of the molecules/systems. This particular step is
+%important for systems with various metastable and transition states - chemical
+%reactions and phase transitions.
 
-{\bf Mixing of data at various QM levels?}\\
-Can we collect data from various levels of QM calculations using different software and the level of theory? What are the {\em pros} and {\em cons} of this strategy? - point for discussion! Calculation of energy and forces inconsistent across different levels of theory and using different software. In particular, various software uses internal coordinates and different reference frames that lead to inconsistent atomic forces. This, in principle, results in inaccurate representations of the underlying PES.\\
+%How to select information-rich configurations from a large pool of possible
+%structures generated by e.g. MD How to do train/validation/test splits for
+%autocorrelated data Large set of data from brute-force MD and ES simulations,
+%split them into training and validity sets. Query-by-committee is a good
+%approach which chooses structures having maximum deviation.
 
+%Various Quantum chemical methods (static calculations, AIMD,...) to generate
+%dataset and how to utilize them wisely Generate configurations from random
+%sampling (Monte carlo?), short AIMD trajectories of various equilibrium states,
+%a few structures from the transition states
 
-{\bf Data repository}\\
-Recent years have witnessed an unprecedented surge of methods to develop ML potentials for systems ranging from simple fluids to complex materials. At this point, it will be interesting to test and assess the performance of various methods and discuss the possibility of using these methods for user-specific systems. To achieve such goals, we are in need of creating data repositories that would contain datasets collected from different sources, levels of theories, and software. 
+%Uncertainty quantification — how do I know whether to trust my potential
+%(examples of particular approaches: query by committee, GP uncertainty,
+%extrapolation grade)
 
-GENERAL DATA FOR EVERYBODY - COMMUNITY DATASET - systems? Different levels of theory - mixing the data for training. General dataset -Delta learning Performance? 
+%Calculating the errors and standard deviations - multiple models
 
-\subsection{Specific Systems}
-Specific systems: 
-How to generate a sufficiently large dataset to begin with
-How to judge what sufficiently large means
+%Efficiency measure: how many datapoints do I need to train a good NNP?  Depends
+%on the network - how it adds candidates to the training dataset, Qbc is not data
+%hungry!
 
-Dataset - molecular conformations, sampled configurations, active learning
-Quantum chemical calculations, MD simulations, enhanced sampling, experimental data, 
+%Stratification strategies: what if I have several relevant regions in phase
+%space?  → Combining enhanced sampling to explore phase space and collect
+%configurations from there.  Stratification over configurations or labels?
 
+%Building models along the pareto front: tradeoff between accuracy and query
+%speed (Kernel methods: SML/kNN or preconditioning/projection)
 
-Can my dataset be too big (such that interesting conformation get no weight) ?
-Big data set or uncorrelated dataset - depends on the complexity of the system! We need diverse and uncorrelated dataset for effective learning (and avoid overfitting). 
+%Constraints and limit behavior: e.g. DM21
 
-Does it make sense to weight some features more than others, as they are supposed to provide more physically relevant information? If so, how to estimate the appropriate weight? 
+%Cross validation strategy: once you have trained your model, compare with
+%different systems which share some similarities with the training one. In this
+%way you can test the transferability of your NN potential
 
-Yes, we can use certain type of features that would allow us distinguish between various configurations/states of the molecules/systems. This particular step is important for systems with various metastable and transition states - chemical reactions and phase transitions. 
+%Similar: train multiple models and see if they agree. If they don’t, these are
+%configurations to add in a next generation of your model. (Query-by-commitee
+%(Qbc) can be used to add largely diverged (uncorrelated) configurations)
 
-How to select information-rich configurations from a large pool of possible structures generated by e.g. MD
-How to do train/validation/test splits for autocorrelated data
-Large set of data from brute-force MD and ES simulations, split them into training and validity sets. Query-by-committee is a good approach which chooses structures having maximum deviation. 
+%Publish all data, code and weights to reproduce the work. Code best as (docker)
+%container due to dependencies. List examples of places where and how to do that.
 
-Various Quantum chemical methods (static calculations, AIMD,...) to generate dataset and how to utilize them wisely
-Generate configurations from random sampling (Monte carlo?), short AIMD trajectories of various equilibrium states, a few structures from the transition states
+%Propose an interface to support such that automated integration becomes easy?
+%(e.g. for “huggingface for chemistry models”
+%https://cs.uchicago.edu/news/uchicago-argonne-researchers-will-cultivate-ai-model-gardens-with-3-5m-nsf-grant/)
 
-Uncertainty quantification — how do I know whether to trust my potential (examples of particular approaches: query by committee, GP uncertainty, extrapolation grade)
+%Use of gradient information in training data (many properties are derivatives of
+%the energy and some derivatives in quantum chemistry are free). Prediction of
+%partial atomic charges and their derivatives.
 
-Calculating the errors and standard deviations - multiple models
-
-Efficiency measure: how many datapoints do I need to train a good NNP?
-Depends on the network - how it adds candidates to the training dataset, Qbc is not data hungry!
-
-Stratification strategies: what if I have several relevant regions in phase space?
-→ Combining enhanced sampling to explore phase space and collect configurations from there.
-Stratification over configurations or labels?
-
-Building models along the pareto front: tradeoff between accuracy and query speed (Kernel methods: SML/kNN or preconditioning/projection)
-
-Constraints and limit behavior: e.g. DM21
-
-Cross validation strategy: once you have trained your model, compare with different systems which share some similarities with the training one. In this way you can test the transferability of your NN potential
-
-Similar: train multiple models and see if they agree. If they don’t, these are configurations to add in a next generation of your model. (Query-by-commitee (Qbc) can be used to add largely diverged (uncorrelated) configurations)
-
-Publish all data, code and weights to reproduce the work. Code best as (docker) container due to dependencies. List examples of places where and how to do that.
-
-Propose an interface to support such that automated integration becomes easy? (e.g. for “huggingface for chemistry models” https://cs.uchicago.edu/news/uchicago-argonne-researchers-will-cultivate-ai-model-gardens-with-3-5m-nsf-grant/)
-
-Use of gradient information in training data (many properties are derivatives of the energy and some derivatives in quantum chemistry are free). Prediction of partial atomic charges and their derivatives.
-
-Data more important than specific ML model/architectures
+%Data more important than specific ML model/architectures
 
 
 \section{Reference Method Selection}
-Any machine learning model is ultimately limited in accuracy by the reference method and the (numerical) noise that is associated with it. In the absence of any noise, the accuracy of the reference method is approached asymptotically with additional training data. In practice however, quantum chemistry reference data set are typically converged up to some threshold which admits some noise depending on the initial guess of the solution, the optimizer and the particular version of the quantum chemistry code. Therefore, it is crucial to converge reference data tightly, as in the converged limit, codes yield almost identical results\cite{Lejaeghere2016}. When balancing the budget, explicitly calculating the forces in quantum chemistry commonly adds between 40\,\%\ (HF, DFT) and 100\,\%\ (CCSD) of the cost of the system in question, although emerging codes for differentiable quantum chemistry\cite{TamayoMendoza2018} can circumvent the costly evaluation at the expense of memory and allow for otherwise unavailable higher order derivatives\cite{Abbott2021} or analytical alchemical derivatives\cite{Kasim_2022}. In some cases, having force labels to train on seems to help if forces are queried but seem to add little otherwise\cite{Christensen2020}.
+Any machine learning model is ultimately limited in accuracy by the reference
+method and the (numerical) noise that is associated with it. In the absence of
+any noise, the accuracy of the reference method is approached asymptotically
+with additional training data. In practice however, quantum chemistry reference
+data set are typically converged up to some threshold which admits some noise
+depending on the initial guess of the solution, the optimizer and the particular
+version of the quantum chemistry code. Therefore, it is crucial to converge
+reference data tightly, as in the converged limit, codes yield almost identical
+results \cite{lejaeghereReproducibilityDensityFunctional2016a}. When balancing
+the budget, explicitly calculating the forces in quantum chemistry commonly adds
+between 40\,\%\ (HF, DFT) and 100\,\%\ (CCSD) of the cost of the system in
+question, although emerging codes for differentiable quantum
+chemistry \cite{tamayo-mendozaAutomaticDifferentiationQuantum2018b} can
+circumvent the costly evaluation at the expense of memory and allow for
+otherwise unavailable higher order
+derivatives \cite{abbottArbitraryOrderDerivativesQuantum2021} or analytical
+alchemical derivatives \cite{kasimDQCPythonProgram2022}. In some cases, having
+force labels to train on seems to help if forces are queried but seem to add
+little otherwise \cite{christensenRoleGradientsMachine2020a}.
 
-When considering approaches to merge information from different levels of theory such as $\Delta$-ML\cite{Ramakrishnan2015} or CQML\cite{Zaspel2018}, it is often beneficial to generate training data at different levels of theory which form a strict hierarchy of accuracy as this commonly is more data efficient in learning. The wave function methods HF, MP2, CCSD, CCSD(T) form such a hierarchy unlike different rungs of Jacob's ladder in DFT\cite{Perdew2001} or basis set series such as DZ, TZ, QZ. Alternatives for basis sets might be those which can be systematically improved\cite{Lopez2023}.
+When considering approaches to merge information from different levels of theory
+such as $\Delta$-ML \cite{ramakrishnanBigDataMeets2015} or
+CQML \cite{zaspelBoostingQuantumMachine2019}, it is often beneficial to generate
+training data at different levels of theory which form a strict hierarchy of
+accuracy as this commonly is more data efficient in learning. The wave function
+methods HF, MP2, CCSD, CCSD(T) form such a hierarchy unlike different rungs of
+Jacob's ladder in DFT \cite{perdewJacobLadderDensity2001a} or basis set series
+such as DZ, TZ, QZ. Alternatives for basis sets might be those which can be
+systematically improved \cite{emalopezSeriallyImprovedGTOs2023}.
 
-Since typically large training data sets are required, the reference data can only be obtained by high-throughput calculations in a fully automated manner. This does however pose the challenge of converging DFT calculations automatically, which is not likely to work out-of-the-box using common quantum chemistry codes. Depending on the region of chemical space and the code used, success rates can be as low as 40\%\cite{Heinen2022}, which would introduce a bias in the training data. Quantum chemistry codes tend to fail or slow down consistently in regions of chemical space, which e.g. has been exploited to predict in which cases DFT will fail\cite{Duan2019} or how long DFT, MP2, CCSD(T), CASSCF or MRCISD+Q calculations will take\cite{Heinen2019}. Ignoring the failed or slow cases would restrict the training data to the region which is easy to converge for the reference method which might introduce a bias towards more similar and expected electronic structure cases. Strategies to improve convergence include in order of simplicity: considering different initial guesses, considering different SCF optimizers, enabling an inner and outer SCF cycle, using second-order SCF methods, converging with a different method/DFT functional first, convergence on a smaller basis set and projection onto a larger one, converging with one electron less, then starting the reference calculation from there, or scaling the overall system and restarting on the target system using that solution. Suggestions for appropriate DFT protocols have been collected elsewhere\cite{Bursch2022}.
+Since typically large training data sets are required, the reference data can
+only be obtained by high-throughput calculations in a fully automated manner.
+This does however pose the challenge of converging DFT calculations
+automatically, which is not likely to work out-of-the-box using common quantum
+chemistry codes. Depending on the region of chemical space and the code used,
+success rates can be as low as 40\% \cite{heinenTransitionStateSearch2022}, which
+would introduce a bias in the training data. Quantum chemistry codes tend to
+fail or slow down consistently in regions of chemical space, which e.g. has been
+exploited to predict in which cases DFT will
+fail \cite{duanLearningFailurePredicting2019} or how long DFT, MP2, CCSD(T),
+CASSCF or MRCISD+Q calculations will
+take \cite{heinenMachineLearningComputational2020}. Ignoring the failed or slow
+cases would restrict the training data to the region which is easy to converge
+for the reference method which might introduce a bias towards more similar and
+expected electronic structure cases. Strategies to improve convergence include
+in order of simplicity: considering different initial guesses, considering
+different SCF optimizers, enabling an inner and outer SCF cycle, using
+second-order SCF methods, converging with a different method/DFT functional
+first, convergence on a smaller basis set and projection onto a larger one,
+converging with one electron less, then starting the reference calculation from
+there, or scaling the overall system and restarting on the target system using
+that solution. Suggestions for appropriate DFT protocols have been collected
+elsewhere \cite{burschBestPracticeDFT2022}.
 
 \section{Model Training}
-Chemistry community at large established ML model best practices
-Following established best practices: https://www.nature.com/articles/s41557-021-00716-z
-<more refs?>
 
-Training a robust ML model requires striking a balance between underfitting and overfitting. Underfitting occurs when the model is too simple and fails to capture the underlying patterns in the data. On the other hand, overfitting happens when the model becomes too complex and starts to memorize the training data, resulting in poor generalization to unseen data. Finding the optimal balance is crucial for achieving good predictive performance. This balance is often controlled through the optimization of model hyperparameters.
-Hyperparameters are settings that are not learned from the data but are chosen by the researcher before training the model. They determine the behavior and complexity of the model. Optimizing hyperparameters involves finding the best combination of values that leads to the desired performance. Here are some common techniques used for hyperparameter optimization:
+Model training procedure is the crucial stage that connects the data collection and model architecture. We implicitly create a function space of possible solutions through the model design, which is subsequently conditioned on the training data set by selecting appropriate parameters. \cite{keithCombiningMachineLearning2021}
 
-Manual tuning. Initially, hyperparameters can be adjusted manually based on prior knowledge or heuristics. This process involves setting values based on insights from the problem domain or best practices. While manual tuning can provide reasonable results, it is time-consuming and relies heavily on the expertise and intuition of the practitioner.
+%Chemistry community at large established ML model best practices Following
+%established best practices \cite{artrithBestPracticesMachine2021} is an obvious first approximation.
+%<more refs?>
 
-Grid search. Grid search involves specifying a set of possible values for each hyperparameter and exhaustively evaluating the model's performance with all possible combinations. The performance metrics, such as accuracy or loss, are computed for each combination, and the hyperparameter values that yield the best performance are selected. Grid search can be effective for a small number of hyperparameters, but it becomes computationally expensive as the number of hyperparameters and their possible values increases.
+Training a robust ML model requires striking a balance between underfitting and
+overfitting. Underfitting occurs when the model is too simple and fails to
+capture the underlying patterns in the data. On the other hand, overfitting
+happens when the model becomes too complex and starts to memorize the training
+data, resulting in poor generalization to unseen data. Finding the optimal
+balance is crucial for achieving good predictive performance.This balance is
+often controlled through the optimization of model hyperparameters.
 
-Random search. Random search is an alternative to grid search, where hyperparameters are sampled randomly from predefined ranges. This approach avoids the exhaustive search of all possible combinations, which makes it more computationally efficient. By randomly sampling hyperparameter values, it explores a broader space and has the potential to discover better combinations.
+Note that model families (e.g. linear regression, neural networks, kernel methods) differ in their training cost which commonly is assumed to be negligible since models are typically queried so often that the average training cost per data point converges to zero.
 
-Bayesian optimization. Bayesian optimization uses probabilistic models to guide the search for the best hyperparameters. It maintains a probabilistic model of the performance of the model as a function of the hyperparameters. Based on this model, it selects hyperparameters that are likely to yield better performance, iteratively refining the search over time. Bayesian optimization can be efficient for hyperparameter optimization, especially when the search space is large, or the evaluation of each combination is costly.
+\subsection{Hyperparameters}
+Hyperparameter tuning approaches, also referred as hyperparameter optimisation, are techniques for systematically determining the most efficient hyperparameter combination for a machine learning model \cite{keith2021combining}. Some of them are settings that are not learned from the data but are chosen
+by the researcher before training the model. They determine the behavior and
+complexity of the model. Optimizing hyperparameters involves finding the best
+combination of values that leads to the desired performance. Here are some
+common techniques used for hyperparameter optimization:
 
-Automated methods. Various automated methods, such as genetic algorithms, reinforcement learning, or neural architecture search, have been developed to automate the process of hyperparameter optimization. These methods employ optimization algorithms or learning techniques to automatically search for optimal hyperparameters. They can handle complex and high-dimensional search spaces but may require significant computational resources.
+\textit{Manual tuning}. Initially, hyperparameters can be adjusted manually
+based on prior knowledge or heuristics. This process involves setting values
+based on insights from the problem domain or best practices. While manual tuning
+can provide reasonable results, it is time-consuming and relies heavily on the
+expertise and intuition of the practitioner. Consequentially, the results of this procedure may differ for different researchers, making the process less data-driven.
 
-It's important to note that hyperparameter optimization is an iterative process. It typically involves training and evaluating the model multiple times with different hyperparameter settings to find the best configuration. Cross-validation techniques, where the data is split into training and validation sets, are commonly used to estimate the performance of different hyperparameter configurations.
+\textit{Grid search}. Grid search involves specifying a set of possible values
+for each hyperparameter and exhaustively evaluating the model's performance with
+all possible combinations. The performance metrics, such as accuracy or loss,
+are computed for each combination, and the hyperparameter values that yield the
+best performance are selected. Grid search can be effective for a small number
+of hyperparameters, but it becomes computationally expensive as the number of
+hyperparameters and their possible values increases.
 
-	Data Determines the Model
-The size of the dataset plays a significant role in determining the choice of the ML model. In general, when working with smaller datasets, traditional machine learning models coupled with feature engineering techniques can be highly effective. By carefully engineering features, these models can create robust representations that result in accurate predictions.
-When dealing with larger and more diverse datasets, feature learning techniques such as deep learning tend to be more advantageous. Deep learning models have the ability to automatically learn and extract meaningful patterns directly from the raw data. They can effectively capture complex relationships and dependencies within the dataset. With larger datasets, these models are often able to uncover intricate patterns that might not be apparent through traditional feature engineering approaches.
-The reason behind the reliance on dataset size is related to the generalization capability of ML models. With smaller datasets, traditional models can effectively generalize from the provided information, as the data tends to be more representative of the problem domain. However, when the dataset size increases, the risk of overfitting decreases, and feature learning models become more beneficial. These models have the capacity to capture a broader range of features and can adapt to the complexity and diversity present in larger datasets.
+\textit{Random search}. Random search is an alternative to grid search, where
+hyperparameters are sampled randomly from predefined ranges. This approach
+avoids the exhaustive search of all possible combinations, which makes it more
+computationally efficient. By randomly sampling hyperparameter values, it
+explores a broader space and has the potential to discover better combinations. However, it scales as unfavourably with number of hyperparameters as the grid search does. For some methods such as kernel methods where the optimal hyperparameter settings are often found for a narrow domain only, this may be inefficient.
 
-Model Evaluation and Selection
-	Comparing the accuracy of ML models to baseline and state-of-the-art (SOTA) models is of great importance. It provides valuable insights into the performance of the models and helps gauge their effectiveness in solving specific tasks or problems. Here are some key reasons why such comparisons are crucial:
-Performance evaluation: Comparing model accuracy to a baseline model serves as a benchmark for performance evaluation. A baseline model represents a simple or naive approach to solving a problem. By comparing against this baseline, one can assess whether the developed model provides any significant improvements. It helps answer questions like: Does the model outperform a basic rule-based or random guess model? Is the additional complexity and computational cost justified by the increase in accuracy? Evaluating against a baseline model provides a starting point for understanding the potential of the proposed model.
-Model selection: Comparing the accuracy of different models allows researchers to choose the most suitable model for a particular task. By comparing against SOTA models, one can identify the upper limit of performance achieved by the best existing methods. This helps in understanding the gap between current performance and the desired level. It also guides the selection of the most appropriate model for a given application case. If a proposed model performs significantly better than the baseline and is competitive with SOTA models, it is considered a promising candidate for further exploration.
-Progress assessment: Comparing model accuracy against state-of-the-art models helps in assessing the progress made in the field of machine learning. It provides a measure of how far the research has advanced in solving a specific problem. By monitoring improvements over time, researchers can identify trends and breakthroughs, which can guide future research directions. It also helps in identifying areas where further advancements are needed and motivates the development of new techniques and algorithms.
+\textit{Bayesian optimization} Bayesian optimization uses probabilistic models
+to guide the search for the best hyperparameters. It maintains a probabilistic
+model of the performance of the model as a function of the hyperparameters.
+Based on this model, it selects hyperparameters that are likely to yield better
+performance, iteratively refining the search over time. Bayesian optimization
+can be efficient for hyperparameter optimization, especially when the search
+space is large, or the evaluation of each combination is costly.
+
+\textit{Automated methods}. Various automated methods, such as genetic
+algorithms, reinforcement learning, or neural architecture search, have been
+developed to automate the process of hyperparameter optimization. These methods
+employ optimization algorithms or learning techniques to automatically search
+for optimal hyperparameters. They can handle complex and high-dimensional search
+spaces but may require significant computational resources.It's important to note that hyperparameter optimization is an iterative process.
+It typically involves training and evaluating the model multiple times with
+different hyperparameter settings to find the best configuration.
+Cross-validation techniques, where the data is split into training and
+validation sets, are commonly used to estimate the performance of different
+hyperparameter configurations.
+
+The size of the dataset plays a significant role in determining the choice of
+the ML model. In general, when working with smaller datasets, traditional
+machine learning models coupled with feature engineering techniques can be
+highly effective. By carefully engineering features, these models can create
+robust representations that result in accurate predictions.  When dealing with
+larger and more diverse datasets, feature learning techniques such as deep
+learning tend to be more advantageous. Deep learning models have the ability to
+automatically learn and extract meaningful patterns directly from the raw data.
+They can effectively capture complex relationships and dependencies within the
+dataset. With larger datasets, these models are often able to uncover intricate
+patterns that might not be apparent through traditional feature engineering
+approaches.  The reason behind the reliance on dataset size is related to the
+generalization capability of ML models. With smaller datasets, traditional
+models can effectively generalize from the provided information, as the data
+tends to be more representative of the problem domain. However, when the dataset
+size increases, the risk of overfitting decreases, and feature learning models
+become more beneficial. These models have the capacity to capture a broader
+range of features and can adapt to the complexity and diversity present in
+larger datasets.
+
+Comparing the accuracy of ML models to baseline and state-of-the-art (SOTA)
+models is of great importance. It provides valuable insights into the
+performance of the models and helps gauge their effectiveness in solving
+specific tasks or problems. Here are some key reasons why such comparisons are
+crucial: 
+
+\textit{Performance evaluation}. Comparing model accuracy to a baseline model
+serves as a benchmark for performance evaluation. A baseline model represents a
+simple or naive approach to solving a problem. By comparing against this
+baseline, one can assess whether the developed model provides any significant
+improvements. It helps answer questions like: Does the model outperform a basic
+rule-based or random guess model? Is the additional complexity and computational
+cost justified by the increase in accuracy? Evaluating against a baseline model
+provides a starting point for understanding the potential of the proposed model.
+
+\textit{Model selection}. Comparing the accuracy of different models allows
+researchers to choose the most suitable model for a particular task. By
+comparing against SOTA models, one can identify the upper limit of performance
+achieved by the best existing methods. This helps in understanding the gap
+between current performance and the desired level. It also guides the selection
+of the most appropriate model for a given application case. If a proposed model
+performs significantly better than the baseline and is competitive with SOTA
+models, it is considered a promising candidate for further exploration.
+
+\textit{Progress assessment}. Comparing model accuracy against state-of-the-art
+models helps in assessing the progress made in the field of machine learning. It
+provides a measure of how far the research has advanced in solving a specific
+problem. By monitoring improvements over time, researchers can identify trends
+and breakthroughs, which can guide future research directions. It also helps in
+identifying areas where further advancements are needed and motivates the
+development of new techniques and algorithms.
+
+It is worth noting though that an approach can be useful to the community even if it does not reach or improve SOTA but rather allows for a different route towards the same goal and shows sufficient promise.
 
 \section{Quality Measurements for MD simulations}
 
-NNPs can make inaccurate predictions of the stability of chemical structures. The practice of training NNPs on equilibrium geometries and an incomplete subset of chemical space creates scenarios where the NNP will overestimate the stability of alternative chemical structures, so simulations of these molecules may generate isomers or geometries that should be predicted to be unstable. [unphysical water equilibrium geometry: https://doi.org/10.1101/2021.08.24.457513], Rufa et al (unpublished results) reports the transformation of peptide bonds from their accurate trans configuration into a cis conformation). 
-More generally, NNPs have more possible sources of instability compared to molecular mechanical force fields because force fields often use simple functions to approximate the potential energy surface. This typically yields an artificially smooth surface. Notably, bond stretches and angles are typically calculated using harmonic potentials in MM methods. Simulations that generate large fluctuations along these degrees of freedom will be pushed back to equilibrium geometries by the quadratic energy term. Likewise, the Lennard-Jones potentials used by many classical force fields will ensure that unphysically close contacts do not occur. Many popular neural network potentials do not have equivalent terms that confine the simulation to reasonable chemical geometries, so if a simulation generates configurations where the NNP is undertrained, the simulations can continue propagating in this space. For instance, Tkacyk et al reports an unphysical bond break of a sulfonate ester during simulations (https://doi.org/10.26434/chemrxiv-2023-qq206). Geometry optimizations will not necessarily reveal these issues because there may be an activation energy for these isomerizations to occur. 
+Models can make inaccurate predictions of the stability of chemical structures.
+The practice of training models on equilibrium geometries and an incomplete subset
+of chemical space creates scenarios where the NNP will overestimate the
+stability of alternative chemical structures, so simulations of these molecules
+may generate isomers or geometries that should be predicted to be unstable, e.g. an 
+unphysical water equilibrium geometry \cite{wiederTeachingFreeEnergy2021}.
+%Rufa et al (unpublished results) reports the transformation of peptide bonds
+%from their accurate trans configuration into a cis conformation).  
+More generally, models have more possible sources of instability compared to molecular
+mechanical force fields because force fields often use simple functions to
+approximate the potential energy surface. This typically yields an artificially
+smooth surface. Notably, bond stretches and angles are typically calculated
+using harmonic potentials in MM methods. Simulations that generate large
+fluctuations along these degrees of freedom will be pushed back to equilibrium
+geometries by the quadratic energy term. Likewise, the Lennard-Jones potentials
+used by many classical force fields will ensure that unphysically close contacts
+do not occur. Many popular neural network potentials do not have equivalent
+terms that confine the simulation to reasonable chemical geometries, so if a
+simulation generates configurations where the model is undertrained, the
+simulations can continue propagating in this space. For instance, Tkacyk et al
+reports an unphysical bond break of a sulfonate ester during simulations
+\cite{tkaczykUsingNeuralNetwork2023}. Geometry optimizations will not
+necessarily reveal these issues because there may be an activation energy for
+these isomerizations to occur.
 
-One straightforward test if an NNP has issues with this type of stability is to perform MD simulations of molecules drawn from outside the training set. Established molecular datasets such as CHEMBL or Drugbank provide a large number of molecular structures, so this test can be repeated for a large number of molecules to test the configuration space. Even small activation energies can require long MD simulations to observe the transition, so some of these issues will only be revealed by long simulations. For example, Tu et al. performed 100 ps simulations of 100 molecules from the CHEMBL dataset, although simulating a broader set of molecules for a longer simulation time would be more likely to reveal issues in the underlying NNP. 
+One straightforward test if an model has issues with this type of stability is to
+perform MD simulations of molecules drawn from outside the training set.
+Established molecular datasets such as CHEMBL or Drugbank provide a large number
+of molecular structures, so this test can be repeated for a large number of
+molecules to test the configuration space. Even small activation energies can
+require long MD simulations to observe the transition, so some of these issues
+will only be revealed by long simulations. For example, Tu et al. performed 100
+ps simulations of 100 molecules from the CHEMBL dataset, although simulating a
+broader set of molecules for a longer simulation time would be more likely to
+reveal issues in the underlying model.
 
-NNPs are typically trained on energy/forces of small molecules in vacuum and condensed phase behavior is rarely systematically investigated. We want to define a set of best practice guidelines to make sure that a NNP trained on a specific set of training data can be utilized for MD simulation of specific systems. 
+Models are typically trained on energy/forces of small molecules in vacuum and
+condensed phase behavior is rarely systematically investigated. We want to
+define a set of best practice guidelines to make sure that a model trained on a
+specific set of training data can be utilized for MD simulation of specific
+systems.
 
-With a particular Neural Network Potential (NNP) that has been trained on a limited dataset of equilibrium and off-equilibrium configurations and a specific QM level of theory, we advise conducting a series of tests. This ensures its capability to conduct simulations providing understanding of the physical dynamics of the molecular system.
-There are several aspects of stability in MD simulations:
-Structural stability: ability of the molecular system to maintain its overall structure during the simulation, such as maintaining secondary and tertiary structures in proteins. It describes a form of collective behavior arising from non-local interactions among parts of the system
-Energetic stability: The ability of the molecular system to maintain stable energy levels, including potential energy, kinetic energy and total energy. Assuming we are using a high fidelity integrator and reasonable time step energetic stability is necessary.
-Temporal/converged stability: ability of the simulation to maintain its stability over long periods of time. It includes everything said above but additionally requires ensuring that averages over the simulation time for a given time interval converge.
+With a particular model that has been trained on a
+limited dataset of equilibrium and off-equilibrium configurations and a specific
+QM level of theory, we advise conducting a series of tests. This ensures its
+capability to conduct simulations providing understanding of the physical
+dynamics of the molecular system.  There are several aspects of stability in MD
+simulations: 
+
+\textit{Structural stability}. Ability of the molecular system to maintain
+its overall structure during the simulation, such as maintaining secondary and
+tertiary structures in proteins. It describes a form of collective behavior
+arising from non-local interactions among parts of the system 
+
+\textit{Energetic stability}. The ability of the molecular system to maintain stable energy levels,
+including potential energy, kinetic energy and total energy. Assuming we are
+using a high fidelity integrator and reasonable time step energetic stability is
+necessary.  
+
+\textit{Temporal/converged stability}. Ability of the simulation to maintain
+its stability over long periods of time. It includes everything said above but
+additionally requires ensuring that averages over the simulation time for a
+given time interval converge.
 
 \subsection{Simulations in vacuum}
 
-As previously mentioned, the fundamental test involves conducting Molecular Dynamics (MD) simulations using a varied selection of molecules. Key properties to monitor include atomic distances between adjacent atoms (equivalent to bonds) and angles formed by groups of three atoms. Bonds have a maximum limit, and surpassing this could signify bond breaks. Meanwhile, angles can be assessed relative to their corresponding term in the force field, and flagged if these values exceed a set threshold.
-Another fundamental property to track is the conservation of energy within the microcanonical ensemble. Provided that a high-precision integrator and an appropriate timestep are utilized, energy must be preserved throughout the simulation duration.
-As NNPs don't possess analytical functional forms gaining insights into their behavior in edge cases can be informative, for instance, when atoms are moved atop each other.
+As previously mentioned, the fundamental test involves conducting Molecular
+Dynamics (MD) simulations using a varied selection of molecules. Key properties
+to monitor include atomic distances between adjacent atoms (equivalent to bonds)
+and angles formed by groups of three atoms. Bonds have a maximum distance, and
+surpassing this could signify bond breaks. Meanwhile, angles can be assessed
+relative to their corresponding term in the force field, and flagged if these
+values exceed a set threshold.  Another fundamental property to track is the
+conservation of energy within the microcanonical ensemble. Provided that a
+high-precision integrator and an appropriate timestep are utilized, energy must
+be preserved throughout the simulation duration.  As some neural network potentials don't possess
+analytical functional forms gaining insights into their behavior in edge cases
+can be informative, for instance, when atoms are moved atop each other.
 
-Another useful exercise might be a bonded degree of freedom scan for a single molecule in a vacuum. For example, incrementally moving a single hydrogen atom of methane along the bond vector from a carbon-hydrogen distance (r(C,H)) of 0.0 to 5 Angstrom. This process can help highlight how the NNP behaves when atoms are moved very close to or far away from each other.
+Another useful exercise might be a bonded degree of freedom scan for a single
+molecule in a vacuum. For example, incrementally moving a single hydrogen atom
+of methane along the bond vector from a carbon-hydrogen distance (r(C,H)) of 0.0
+to 5 Angstrom. This process can help highlight how the model potential behaves when atoms
+are moved very close to or far away from each other.
 
 \subsection{Solvated systems}
 
-In order to accurately simulate solvated systems, it's critical to ensure the physical properties of water are correctly depicted. Validating this can be a complex task, as many QM methods struggle to reproduce experimental properties themselves, so failures to reproduce these quantities might be caused by the level of theory used to produce the training set.
-An effective first-step sanity check is to monitor the distribution of water bonds and angles.
-Based on the specific application, further properties from simulations of pure water may be of interest, such as: Densities, oxygen–oxygen radial distribution function OO(r) and structure factors of a pure waterbox. The heat of vaporization can also be calculated.
+In order to accurately simulate solvated systems, it's critical to ensure the
+physical properties of the solvent are correctly depicted. Validating this can be a
+complex task, as many QM methods struggle to reproduce experimental properties
+themselves, so failures to reproduce these quantities might be caused by the
+level of theory used to produce the training set.  An effective first-step
+sanity check for water is to monitor the distribution of water bonds and angles.  Based on
+the specific application, further properties from simulations of pure water may
+be of interest, such as: Densities, oxygen–oxygen radial distribution function
+OO(r) and structure factors of a pure water box. The heat of vaporization could be calculated as an ensemble indicator.
 
-A generalizable NNP trained on a large set of molecules should also be able to correctly describe interactions between small molecules. Pure liquid mixtures provide a reliable test to understand the limitations of the NNP. Suitable combinations of small molecules could include pairs such as water and methane, or larger molecules like benzene or ethanol. From these mixtures, one can compute properties such as densities, heat capacities, and heat of vaporization and then compare them with experimental values to assess the accuracy of the NNP.
+A generalizable model trained on a large set of molecules should also be able to
+correctly describe interactions between small molecules. Pure liquid mixtures
+provide a reliable test to understand the limitations of the model. Suitable
+combinations of small molecules could include pairs such as water and methane,
+or larger molecules like benzene or ethanol. From these mixtures, one can
+compute properties such as densities, heat capacities, and heat of vaporization
+and then compare them with experimental values to assess the accuracy of the
+model.
 
-Another category of tests could involve simulations of solvated dipeptide systems. These systems can be used to assess the quality of the potential energy and free energy surface. A straightforward test, for instance, would involve running simulations of alanine dipeptide and comparing the resulting Ramachandran plot with experimentally determined torsion minima. To achieve this in a reasonable timeframe, it's recommended to utilize enhanced sampling methods to reduce the timescale needed to sample the torsional degrees of freedom. Doing so also enables the construction of the free energy surface. For more information on these methods, you can refer to this article: https://doi.org/10.48550/arXiv.2210.07237.
+Another category of tests could involve simulations of solvated dipeptide
+systems. These systems can be used to assess the quality of the potential energy
+and free energy surface. A straightforward test, for instance, would involve
+running simulations of alanine dipeptide and comparing the resulting
+Ramachandran plot with experimentally determined torsion minima. To achieve this
+in a reasonable timeframe, it's recommended to utilize enhanced sampling methods
+to reduce the timescale needed to sample the torsional degrees of freedom. Doing
+so also enables the construction of the free energy surface
+\citet{fuForcesAreNot2022}.
 
-If a given NNP in combination with a given training set passes all of these quality checks it demonstrates a fundamental capability to perform MD simulations. While it might not be necessarily suitable for systems not covered in these tests, there's a good chance that it will perform within reasonable limits, provided these systems are similar to the ones tested.
+If a given model in combination with a given training set passes all of these
+quality checks it demonstrates a fundamental capability to perform MD
+simulations. While it might not be necessarily suitable for systems not covered
+in these tests, there is a good chance that it will perform within reasonable
+limits, provided these systems are similar to the ones tested.
 
 
 \begin{table*}
     \centering
     \begin{tabular}{l|l|l|l|l}
          \textbf{System} & \textbf{System type} & \textbf{\# Atoms} & \textbf{Simulation Length} & \textbf{Objective}\\
-Small molecules &    Vacuum &9-50 &5 ns&Distances, angles, potential energy\\      
+Small molecules &    Vacuum &9-50 &5 ns&Distances, angles, potential energy\\
 Alanine dipeptide &Peptide in vacuum&23 &5 ns&Dihedral angle, distances\\
 Alanine dipeptide &Peptide in solution& \textasciitilde  1K&5 ns&Dihedral angle, distances, RDF, structure factor\\
 Water &Pure liquids& \textasciitilde 1K&5 ns&\\
@@ -307,38 +753,117 @@ Methanol / Water &Mixed solutions&\textasciitilde 1K&5 ns&\\
 \end{table*}
 
 \section{Why things go wrong}
-“Wrong” can be defined broadly into three categories: a problem with the setup of a model or simulation, a problem with the training data itself, or an incorrect prediction from a model after training on given data.
+“Wrong” can be defined broadly into three categories: a problem with the setup
+of a model or simulation, a problem with the training data itself, or an
+incorrect prediction from a model after training on given data.
 
-Common issues related to the setup of a simulation
-integration timestep is too long — beware that this may be different to the required timestep for a classical potential or ab initio MD
-Other ideas from here
+Common issues related to the setup of a simulation integration timestep is too
+long -- beware that this may be different to the required timestep for a
+classical potential or ab initio MD Other ideas from here
 
-In general, an ML model’s predictions can only be as good as the underlying reference data. Problems with the reference data can be divided into two categories: inherent limitations of the reference method itself, such as dispersion interactions missing in DFT, and those of ill-convergence, e.g. in the basis set, reciprocal space sampling, or energy tolerance for SCF. We note that ML fitting can be particularly sensitive to noise in data, such that much tighter convergence of QM calculations are required than would be necessary in conventional quantum chemistry applications.
+In general, an ML model’s predictions can only be as good as the underlying
+reference data. Problems with the reference data can be divided into two
+categories: inherent limitations of the reference method itself, such as
+dispersion interactions missing in DFT, and those of ill-convergence, e.g. in
+the basis set, reciprocal space sampling, or energy tolerance for SCF. We note
+that ML fitting can be particularly sensitive to noise in data, such that much
+tighter convergence of QM calculations are required than would be necessary in
+conventional quantum chemistry applications.
 
-Even if all of the simulation setup, fitting setup, and reference data quality are reasonable, unphysical predictions remain a possibility. Reasons for this include
-Insufficient data. As outlined in section \ref{stability issues}, the flexible functional forms of typical ML methods, especially NNPs, often lead to false minima in undertrained regions and hence unstable simulations. Adding more data points can remedy this, e.g. with an active learning scheme.
+Even if all of the simulation setup, fitting setup, and reference data quality
+are reasonable, unphysical predictions remain a possibility. Reasons for this
+include Insufficient data. As outlined in section \ref{stability issues}, the
+flexible functional forms of typical ML methods, especially NNPs, often lead to
+false minima in undertrained regions and hence unstable simulations. Adding more
+data points can remedy this, e.g. with an active learning scheme.
 
-Generally, model performance should strictly increase with model size which is often visualized as learning curve\cite{Viering2023}. What if adding data does not help, though? Firstly, one should ask if they have already reached an accuracy limit given the noise in the reference data \cite{Christensen2020}. The formal statement from learning theory is to expect a linear relationship between the logarithm of prediction errors and the logarithm of training data instances if a function is learned from random support data points over a fixed volume\cite{NIPS1993_1aa48fc4}. It is crucial to select the training data randomly for this consideration: if new dimensions of the problem are added (e.g. by including additional elements or chemical spaces) or the representation increases in length, the number of required data points increases again, as the fill-distance relationship\cite{Madych1992} suggests. Another factor for no improvement with additional data could be a cutoff radius which only considers effects within a certain distance from the query atom. While short-sightedness of interactions with is commonly assumed in quantum chemistry applications\cite{Prodan2005}, it effectively ignores long-ranged interactions such as some components of electrostatics which results in a accuracy limit for the representation.
+Generally, model performance should strictly increase with model size which is
+often visualized as learning curve\cite{vieringShapeLearningCurves2023}. What if
+adding data does not help, though? Firstly, one should ask if they have already
+reached an accuracy limit given the noise in the reference data
+\cite{christensenRoleGradientsMachine2020a}. The formal statement from learning
+theory is to expect a linear relationship between the logarithm of prediction
+errors and the logarithm of training data instances if a function is learned
+from random support data points over a fixed
+volume\cite{cortesLearningCurvesAsymptotic1993a}. It is crucial to select the
+training data randomly for this consideration: if new dimensions of the problem
+are added (e.g. by including additional elements or chemical spaces) or the
+representation increases in length, the number of required data points increases
+again, as the fill-distance
+relationship\cite{madychBoundsMultivariatePolynomials1992} suggests. Another
+factor for no improvement with additional data could be a cutoff radius which
+only considers effects within a certain distance from the query atom. While
+short-sightedness of interactions with is commonly assumed in quantum chemistry
+applications\cite{prodanNearsightednessElectronicMatter2005}, it effectively
+ignores long-ranged interactions such as some components of electrostatics which
+results in a accuracy limit for the representation.
 
 %Kernel methods:
 %Ambiguous representation
 %Symmetries not covered
 %Irregular in feature space
-%https://pubs.acs.org/doi/full/10.1021/acs.chemrev.1c00021
+% \cite{musilPhysicsInspiredStructuralRepresentations2021b}
 
 \subsection{Timestep and constraints}
-Neural network potentials that have analytical derivatives can be used readily in molecular dynamics simulations. As a form of numerical integration, standard molecular dynamics simulations (e.g., using the Verlet integrator) must use a timestep that is at least 10 times shorter than the fastest molecular degree of freedom in the simulation. In bioorganic systems, this is typically the vibration of covalent C-H or O-H bonds, which oscillate on the order of 10 fs due to their high force constants and the small mass of the hydrogen atom. As a consequence, MD simulations of these systems often use 0.5 – 1 fs time steps. If a larger timestep is used, the simulations can become numerically unstable because an oscillation of these bonds can spuriously stretch or contract to a spurious geometry. More generally, these simulations may not conserve the total energy of the system because the MD integration with too large of a timestep can generate structures that are not energetically consistent with energy and forces of the simulation in the previous time step. These deviations can cause the system to cool or heat to an unrealistic state and do not sample a correct thermodynamic ensemble. Algorithms like SHAKE and RATTLE were developed to constrain these degrees of freedom to remain constant, which has allowed numerically-stable MD simulations of C–H or O-H containing systems using timesteps to 2 fs. Additional simulation methods like hydrogen mass repartitioning have allowed timesteps as long as 4 fs.
+Neural network potentials that have analytical derivatives can be used readily
+in molecular dynamics simulations. As a form of numerical integration, standard
+molecular dynamics simulations (e.g., using the Verlet integrator) must use a
+timestep that is at least 10 times shorter than the fastest molecular degree of
+freedom in the simulation. In bioorganic systems, this is typically the
+vibration of covalent C-H or O-H bonds, which oscillate on the order of 10 fs
+due to their high force constants and the small mass of the hydrogen atom. As a
+consequence, MD simulations of these systems often use 0.5 – 1 fs time steps. If
+a larger timestep is used, the simulations can become numerically unstable
+because an oscillation of these bonds can spuriously stretch or contract to a
+spurious geometry. More generally, these simulations may not conserve the total
+energy of the system because the MD integration with too large of a timestep can
+generate structures that are not energetically consistent with energy and forces
+of the simulation in the previous time step. These deviations can cause the
+system to cool or heat to an unrealistic state and do not sample a correct
+thermodynamic ensemble. Algorithms like SHAKE and RATTLE were developed to
+constrain these degrees of freedom to remain constant, which has allowed
+numerically-stable MD simulations of C–H or O-H containing systems using
+timesteps to 2 fs. Additional simulation methods like hydrogen mass
+repartitioning have allowed timesteps as long as 4 fs.
  
-MD simulations using NNPs should minimally use the same guidelines, where systems that include bonds containing hydrogens should use a timestep of 0.5 fs at maximum. If algorithms like SHAKE  are used  to constrain the fast degrees of freedom, longer timescales (i.e, 1–2 fs) could be used. The numerical stability of a MD simulation can be tested by performing a short NVE molecular dynamics simulation; if a sufficiently small timestep is used the total energy should be conserved within error, but if a timestep that is too large is used, the total energy will drift from its initial value. 
+MD simulations using NNPs should minimally use the same guidelines, where
+systems that include bonds containing hydrogens should use a timestep of 0.5 fs
+at maximum. If algorithms like SHAKE  are used  to constrain the fast degrees of
+freedom, longer timescales (i.e, 1–2 fs) could be used. The numerical stability
+of a MD simulation can be tested by performing a short NVE molecular dynamics
+simulation; if a sufficiently small timestep is used the total energy should be
+conserved within error, but if a timestep that is too large is used, the total
+energy will drift from its initial value.
 
-[figure of energy conservation of ANI-2X , CGenFF Nve MD simulation of small molecule showing effect of MD timestep on energy conservation]
+%[figure of energy conservation of ANI-2X , CGenFF Nve MD simulation of small
+%molecule showing effect of MD timestep on energy conservation]
 
 \section{Managing Expectations}
-NNPs are bound by the training data. Many of those “black box” methods can not be easily analyzed in case of mispredictions. Conceptually there are two reasons that things go wrong.
+NNPs are bound by the training data. Many of those “black box” methods can not
+be easily analyzed in case of mispredictions. Conceptually there are two reasons
+that things go wrong.
 
-The neural network potential can only achieve the same level of accuracy of the QM method it is trained to reproduce. Because large datasets are needed to train NNPs, density functional theory is typically used to generate the training data. Conventional Kohn-Sham DFT calculations have known limitations due to the use of a single-determinant for the Kohn-Sham orbitals, approximations in the exchange-correlation functional, and the use of finite basis sets. As with a QM study, the suitability of an NNP for an application can be tested by benchmarking its performance on a small model system that includes the relevant chemical features in comparison to high-level ab initio calculations. Going forward, the generation of datasets with higher-quality QM calculations will also improve the quality of the NNPs trained using these data.
+The neural network potential can only achieve the same level of accuracy of the
+QM method it is trained to reproduce. Because large datasets are needed to train
+NNPs, density functional theory is typically used to generate the training data.
+Conventional Kohn-Sham DFT calculations have known limitations due to the use of
+a single-determinant for the Kohn-Sham orbitals, approximations in the
+exchange-correlation functional, and the use of finite basis sets. As with a QM
+study, the suitability of an NNP for an application can be tested by
+benchmarking its performance on a small model system that includes the relevant
+chemical features in comparison to high-level ab initio calculations. Going
+forward, the generation of datasets with higher-quality QM calculations will
+also improve the quality of the NNPs trained using these data.
 
-Another check on the accuracy of an NNP is to test whether the NNP is well-trained for the chemical structures and geometries being modeled. One way to do this is to look at the training set to see if it contains similar training data. A more systematic approach is available for NNPs that use a query-by-consensus approach. For example, the energy and forces of ANI-2x calculations are calculated from the average of 8 neural networks trained using different splits of the dataset and initial parameters. The standard deviation of these NNs will be large when the networks are undertrained, but will be in good agreement when the network parameters are well-trained.
+Another check on the accuracy of an NNP is to test whether the NNP is
+well-trained for the chemical structures and geometries being modeled. One way
+to do this is to look at the training set to see if it contains similar training
+data. A more systematic approach is available for NNPs that use a
+query-by-consensus approach. For example, the energy and forces of ANI-2x
+calculations are calculated from the average of 8 neural networks trained using
+different splits of the dataset and initial parameters. The standard deviation
+of these NNs will be large when the networks are undertrained, but will be in
+good agreement when the network parameters are well-trained.
 
 
 
@@ -349,9 +874,23 @@ Another check on the accuracy of an NNP is to test whether the NNP is well-train
 %Density of local Env is finite and we can deduce dimensionality 
 %Give ballpark estimates of the query wall time 
 
-When using ML potentials for molecular simulations the ultimate aim is likely to learn something about your molecules. You may want to compare your simulation results to experimental data, or to gain insight as to how chemical processes take place. There are a few considerations to keep in mind, when making such comparisons.
-First of all, your ML potential energy surface will at most be as good as you can expect from the underlying reference data. If the level of theory that was used to describe the reference data is inappropriate for the properties you are interested in, you cannot expect that your ML potential will do a good job at describing these properties. Similarly, if the uncertainty in your reference data is large because of ill-converged calculations, this will just be reflected in the ruggedness of the ML potential and potentially affect all predictions you make with it. 
-Second, when comparing your simulation data to experimental data, do not forget that there are probably several assumptions and approximations that underlie this comparison because we are very rarely computing the experimental observable directly. Additionally, there invariably is uncertainty in the experimental data that needs to be taken into account\cite{vanGunsteren2017}. 
+When using ML potentials for molecular simulations the ultimate aim is likely to
+learn something about your molecules. You may want to compare your simulation
+results to experimental data, or to gain insight as to how chemical processes
+take place. There are a few considerations to keep in mind, when making such
+comparisons.  First of all, your ML potential energy surface will at most be as
+good as you can expect from the underlying reference data. If the level of
+theory that was used to describe the reference data is inappropriate for the
+properties you are interested in, you cannot expect that your ML potential will
+do a good job at describing these properties. Similarly, if the uncertainty in
+your reference data is large because of ill-converged calculations, this will
+just be reflected in the ruggedness of the ML potential and potentially affect
+all predictions you make with it.  Second, when comparing your simulation data
+to experimental data, do not forget that there are probably several assumptions
+and approximations that underlie this comparison because we are very rarely
+computing the experimental observable directly. Additionally, there invariably
+is uncertainty in the experimental data that needs to be taken into
+account\cite{vangunsterenValidationMolecularSimulation2018}.
 
 
 \section{Checklists}
@@ -361,17 +900,19 @@ Second, when comparing your simulation data to experimental data, do not forget 
 \begin{checklist}{Usage}
 \begin{itemize}
 \item Do I know why I want to use a machine learning potential (MLP)?
-\item Are my expectations realistic?
+\item Have I identified the desirable range of outputs and the acceptable accuracy?
 \item Is there a generalized MLP already available for my task?
 \item Do I need to train a specific MLP?
 \item What software is most appropriate?
+\item How are the models to be validated?
 \item What computer resources do I need?
 \end{itemize}
 \end{checklist}
 
 \begin{checklist}{Training}
 \begin{itemize}
-\item Choice of reference data: is there usable data available in an existing database?
+\item Choice of reference data: is there usable data available in an existing
+database?
 \item Do I generate the database myself?
 \item What is the appropriate level of theory?
 \item Is a multiscale model appropriate?
@@ -384,8 +925,11 @@ Second, when comparing your simulation data to experimental data, do not forget 
 
 \begin{checklist}{Running a simulation}
 \begin{itemize}
-\item Do I know how I will validate my MLP is appropriate for my molecule / process of interest
-\item Am I sure that my simulation settings are appropriate for this MLP? (E.g. for molecular dynamics: Timestep, Constraints, Thermodynamic boundary conditions, Enhanced sampling techniques)
+\item Do I know how I will validate my MLP is appropriate for my molecule /
+process of interest
+\item Am I sure that my simulation settings are appropriate for this MLP? (E.g.
+for molecular dynamics: Timestep, Constraints, Thermodynamic boundary
+conditions, Enhanced sampling techniques)
 \item Do I have conservation of energy?
 \end{itemize}
 \end{checklist}
@@ -395,7 +939,8 @@ Second, when comparing your simulation data to experimental data, do not forget 
 \item Does my MLP really reproduce the QM energy? Is there a way to check this?
 \item Does increasing the amount of training data diminish the problem?
 \item Do multiple independent potentials agree on the predicted energy?
-\item Is the level of theory of the reference data really appropriate for this problem?
+\item Is the level of theory of the reference data really appropriate for this
+problem?
 \item Is the reference data well converged and well behaved?
 \end{itemize}
 \end{checklist}
@@ -412,45 +957,96 @@ Second, when comparing your simulation data to experimental data, do not forget 
 
 
 
-\section{Tutorial}
-
-\subsection{Kernel methods}
-Kernel functions are a powerful tool to perform non-linear regression, by mapping the input into a higher dimensional space and performing therein linear regression. Through the kernel trick it is possible to operate only on the original space without computing the data in the potentially higher dimensional feature space. 
-The general idea is to represent a function $f$ as a linear combinations of regression parameters $\alpha$ and a kernel function, $k( \cdot, \cdot)$ i.e.
+\section{Kernel Tutorial}
+Kernel functions are a powerful tool to perform non-linear regression, by
+mapping the input into a higher dimensional space and performing therein linear
+regression. Through the kernel trick it is possible to operate only on the
+original space without computing the data in the potentially higher dimensional
+feature space.  The general idea is to represent a function $f$ as a linear
+combinations of regression parameters $\alpha$ and a kernel function, $k( \cdot, \cdot)$ i.e.
 \begin{equation}
     f^{k}(x) = \sum_{i=1}^{N} \alpha_i k(x, x_j)
     \label{eq:lin_kernel_reg}
 \end{equation}
-with $N$ being the number of training samples and $x$ the query point. Intuitively, the kernel function serves as similarity measure and finds the closest point in the training set to the query sample. 
+with $N$ being the number of training samples and $x$ the query point.
+Intuitively, the kernel function serves as similarity measure and finds the
+closest point in the training set to the query sample.
 %The representer theorem tells us that the optimal solution in the reproducing kernel Hilbert space with kernel $k$ is given by eq. \ref{eq:lin_kernel_reg}. 
 A popular choice of kernel functions are for example Gaussian kernels:
 \begin{equation*}
     k(x, x^{*}) = \exp \biggl( - \frac{|| x-x^{*} ||_{2}^2}{2 \sigma^2} \biggr).
 \end{equation*}
-but also linear kernels or Laplacians can be used to compute eq. \ref{eq:lin_kernel_reg}. The regression coefficients are obtained by
+but also linear kernels or Laplacians can be used to compute eq.
+\ref{eq:lin_kernel_reg}. The regression coefficients are obtained by
 \begin{equation*}
     \alpha = (K + \lambda I)^{-1} y
 \end{equation*}
-with $K$ being the kernel matrix $K_{ij} = k(x_i, x_j)$ and $y$ is a vector representation of the labels of the training set at hand \cite{Vu2015}, whereas $\alpha$ is minimizing the following loss function:
+with $K$ being the kernel matrix $K_{ij} = k(x_i, x_j)$ and $y$ is a vector
+representation of the labels of the training set at hand
+\cite{vuUnderstandingKernelRidge2015}, whereas $\alpha$ is minimizing the following
+loss function:
 \begin{align*}
     L(\alpha) = \sum_{i=1}^N (f^k(x_i) - y_i) + \lambda \alpha^T K \alpha.
 \end{align*}
-Essentially, there are three hyperparameters to consider during training and inference, the choice of the kernel function $k$, depending on the kernel function, a kernel function specific parameter as for example $\sigma$ in the Gaussian kernel case and the regularization parameter $\lambda$.
-\\
-The kernel method can be useful in low data regimes for high dimensional problems, since the computation of $\alpha$ depends only on the number of samples \cite{Murphy2013}. With increasing number of samples this can be time consuming, recent work improved the efficiency of kernel methods using GPU hardware and with that being able to efficiently scale to larger dataset sizes \cite{Meanti2020}.  An additional advantage is the possible interpretability of the prediction. Each prediction is based on a weight computed by the kernel function to all datapoints in the training set, allowing to analyze the datapoints responsible for a given predicted outcome. And finally, inference of kernel method tend to be faster, compared to other machine learning approaches as for example neural networks.  
-For a more detailed discussion the reader is referred to \cite{Murphy2013, Vu2015}.
-\\
-In the accompanying juypter notebook to this article an introduction into the basic concepts of kernel ridge regression is given. The notebook is divided into three parts:
+Essentially, there are three hyperparameters to consider during training and
+inference, the choice of the kernel function $k$, depending on the kernel
+function, a kernel function specific parameter as for example $\sigma$ in the
+Gaussian kernel case and the regularization parameter $\lambda$.  \\ The kernel method
+can be useful in low data regimes for high dimensional problems, since the
+computation of $\alpha$ depends only on the number of samples
+\cite{murphyMachineLearningProbabilistic2012}. With increasing number of samples
+this can be time consuming, recent work improved the efficiency of kernel
+methods using GPU hardware and with that being able to efficiently scale to
+larger dataset sizes \cite{meantiKernelMethodsRoof2020}.  An additional
+advantage is the possible interpretability of the prediction. Each prediction is
+based on a weight computed by the kernel function to all datapoints in the
+training set, allowing to analyze the datapoints responsible for a given
+predicted outcome. And finally, inference of kernel method tend to be faster,
+compared to other machine learning approaches as for example neural networks.
+For a more detailed discussion the reader is referred to
+\cite{murphyMachineLearningProbabilistic2012, vuUnderstandingKernelRidge2015}.
+\\ In the accompanying juypter notebook to this article an introduction into the
+basic concepts of kernel ridge regression is given. The notebook is divided into
+three parts:
 \begin{itemize}
-    \item[1.] A self-contained implementation in numpy for the prediction of energies.
-    \item[2.] An extended version of part one with a more sophisticated representation of  molecules to improve the accuracy. 
+    \item[1.] A self-contained implementation in numpy for the prediction of
+energies.
+    \item[2.] An extended version of part one with a more sophisticated
+representation of  molecules to improve the accuracy.
     \item[3.] An extension of part two to predict forces. 
 \end{itemize}
-Part two and three are adapted from the QML codebase and rely on their internal functionalities \cite{Christensen2017}. 
+Part two and three are adapted from the QML codebase and rely on
+their internal functionalities \cite{christensen2017qml}.
+
+%\subsection{Gaussian Process Regressions}
+
+%Gaussian Process Regression (GPR) is a nonlinear, nonparametric regression method
+%that can be used to interpolate between data points spread throughout a 
+%high-dimensional input space. It is based on Bayesian probability theory
+%and is closely related to other regression techniques such as 
+%kernel ridge regression (KRR) and linear regression with radial basis functions \cite{deringerGaussianProcessRegression2021}.
+%\\ Formally, it can be viewed as the probabilistic
+%variant of the KRR, and the benefit, analogous to that of a frequentist and
+%Bayesian viewpoint, is largely the ability to obtain uncertainity estimates of
+%results. \\
+
+% TODO :: Fill out
+%The jupyter-notebook associated with this tutorial contains:
+%\begin{itemize}
+%\item[1.] An introductory example establishing the nomenclature and connecting code to math
+%\item[2.] Demonstration of the effect of varying hyperparameters
+%\item[3.] Extensions for use in mode following methods
+%\end{itemize} \\
+%Gaussian Process Regression (GPR) is a strong tool, providing more insight probabilistic 
+%information for applications consists of time series forecasting, interpolation, 
+%surrogate modelling for optimization difficulties, and uncertainty-aware tasks.
+%%\\ The limitation ought to be pointed out, GPR can be computationally expensive for
+%massive data sets, the methods such as kernel approximation or deep learning models
+%may be better appropriate in such instances \cite{wanReducedspaceGaussianProcess2017}.
 
 \section*{Author Contributions}
 %%%%%%%%%%%%%%%%
-% This section mustt describe the actual contributions of
+% This section must describe the actual contributions of
 % author. Since this is an electronic-only journal, there is
 % no length limit when you describe the authors' contributions,
 % so we recommend describing what they actually did rather than
@@ -493,7 +1089,8 @@ Declare any potentially conflicting interests here, whether or not they pose an 
 %%%%%%%
 % Authors should acknowledge funding sources here. Reference specific grants.
 %%%%%%%
-FMS acknowledges the support of NSF grant CHE-1111111.
+RG was partially supported by the Icelandic Research Fund, grant number
+$217436052$. 
 
 \section*{Author Information}
 \makeorcid
